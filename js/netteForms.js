@@ -2,7 +2,7 @@
  * NetteForms - simple form validation.
  *
  * This file is part of the Nette Framework.
- * Copyright (c) 2004, 2011 David Grudl (http://davidgrudl.com)
+ * Copyright (c) 2004, 2012 David Grudl (http://davidgrudl.com)
  */
 
 var Nette = Nette || {};
@@ -52,7 +52,7 @@ Nette.getValue = function(elem) {
 		return elem.checked;
 
 	} else if (elem.type === 'radio') {
-		return Nette.getValue(elem.form.elements[elem.name]);
+		return Nette.getValue(elem.form.elements[elem.name].nodeName ? [elem] : elem.form.elements[elem.name]);
 
 	} else {
 		return elem.value.replace(/^\s+|\s+$/g, '');
@@ -128,6 +128,7 @@ Nette.validateRule = function(elem, op, arg) {
 		op = op.substr(1);
 	}
 	op = op.replace('::', '_');
+	op = op.replace('\\', '');
 	return Nette.validators[op] ? Nette.validators[op](elem, arg, val) : null;
 };
 
@@ -142,7 +143,10 @@ Nette.validators = {
 	},
 
 	equal: function(elem, arg, val) {
-		arg = arg instanceof Array ? arg : [arg];
+		if (arg === undefined) {
+			return null;
+		}
+		arg = Nette.isArray(arg) ? arg : [arg];
 		for (var i = 0, len = arg.length; i < len; i++) {
 			if (val == (arg[i].control ? Nette.getValue(elem.form.elements[arg[i].control]) : arg[i])) {
 				return true;
@@ -160,9 +164,7 @@ Nette.validators = {
 	},
 
 	length: function(elem, arg, val) {
-		if (typeof arg !== 'object') {
-			arg = [arg, arg];
-		}
+		arg = Nette.isArray(arg) ? arg : [arg, arg];
 		return (arg[0] === null || val.length >= arg[0]) && (arg[1] === null || val.length <= arg[1]);
 	},
 
@@ -175,7 +177,7 @@ Nette.validators = {
 	},
 
 	regexp: function(elem, arg, val) {
-		var parts = arg.match(/^\/(.*)\/([imu]*)$/);
+		var parts = typeof arg === 'string' ? arg.match(/^\/(.*)\/([imu]*)$/) : false;
 		if (parts) { try {
 			return (new RegExp(parts[1], parts[2].replace('u', ''))).test(val);
 		} catch (e) {} }
@@ -183,7 +185,7 @@ Nette.validators = {
 
 	pattern: function(elem, arg, val) {
 		try {
-			return (new RegExp('^(' + arg + ')$')).test(val);
+			return typeof arg === 'string' ? (new RegExp('^(' + arg + ')$')).test(val) : null;
 		} catch (e) {}
 	},
 
@@ -196,7 +198,7 @@ Nette.validators = {
 	},
 
 	range: function(elem, arg, val) {
-		return (arg[0] === null || parseFloat(val) >= arg[0]) && (arg[1] === null || parseFloat(val) <= arg[1]);
+		return Nette.isArray(arg) ? ((arg[0] === null || parseFloat(val) >= arg[0]) && (arg[1] === null || parseFloat(val) <= arg[1])) : null;
 	},
 
 	submitted: function(elem, arg, val) {
@@ -293,6 +295,11 @@ Nette.initForm = function(form) {
 			}
 		}
 	}
+};
+
+
+Nette.isArray = function(arg) {
+	return Object.prototype.toString.call(arg) === '[object Array]';
 };
 
 
