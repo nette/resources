@@ -47,6 +47,12 @@ Nette.getValue = function(elem) {
 	} else if (!elem.form.elements[elem.name].nodeName) { // multi element
 		return Nette.getValue(elem.form.elements[elem.name]);
 
+	} else if (elem.type === 'file') {
+		return elem.files || elem.value;
+
+	} else if (elem.name.match(/\[\]$/)) { // multi element with single option
+		return Nette.getValue([elem]);
+
 	} else if (elem.nodeName.toLowerCase() === 'select') {
 		var index = elem.selectedIndex, options = elem.options, values = [];
 
@@ -67,8 +73,8 @@ Nette.getValue = function(elem) {
 	} else if (elem.type === 'radio') {
 		return elem.checked && elem.value;
 
-	} else if (elem.type === 'file') {
-		return elem.files || elem.value;
+	} else if (elem.nodeName.toLowerCase() === 'textarea') {
+		return elem.value.replace("\r", '');
 
 	} else {
 		return elem.value.replace("\r", '').replace(/^\s+|\s+$/g, '');
@@ -241,7 +247,7 @@ Nette.validateRule = function(elem, op, arg) {
 Nette.validators = {
 	filled: function(elem, arg, val) {
 		return val !== '' && val !== false && val !== null
-			&& (!Nette.isArray(val) || val.length)
+			&& (!Nette.isArray(val) || !!val.length)
 			&& (!window.FileList || !(val instanceof FileList) || val.length);
 	},
 
@@ -344,6 +350,7 @@ Nette.validators = {
 		}
 		return true;
 	},
+
 	image: function (elem, arg, val) {
 		if (window.FileList && val instanceof FileList) {
 			for (var i = 0; i < val.length; i++) {
