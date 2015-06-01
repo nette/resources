@@ -472,7 +472,7 @@ Nette.toggleControl = function(elem, rules, success, firsttime, value) {
 
 				for (var i = 0; i < els.length; i++) {
 					if (els[i].name === name && !Nette.inArray(handled, els[i])) {
-						Nette.addEvent(els[i], oldIE && curElem.type in {checkbox: 1, radio: 1} ? 'click' : 'change', handler);
+						Nette.addEvent(els[i], oldIE && els[i].type in {checkbox: 1, radio: 1} ? 'click' : 'change', handler);
 						handled.push(els[i]);
 					}
 				}
@@ -541,7 +541,13 @@ Nette.initForm = function(form) {
 Nette.initOnLoad = function() {
 	Nette.addEvent(window, 'load', function() {
 		for (var i = 0; i < document.forms.length; i++) {
-			Nette.initForm(document.forms[i]);
+			var form = document.forms[i];
+			for (var j = 0; j < form.elements.length; j++) {
+				if (form.elements[j].getAttribute('data-nette-rules')) {
+					Nette.initForm(form);
+					break;
+				}
+			}
 		}
 	});
 };
