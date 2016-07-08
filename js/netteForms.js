@@ -31,6 +31,7 @@
 var Nette = {};
 
 Nette.formErrors = [];
+Nette.version = '2.4';
 
 
 /**
@@ -39,6 +40,12 @@ Nette.formErrors = [];
 Nette.addEvent = function(element, on, callback) {
 	if (element.addEventListener) {
 		element.addEventListener(on, callback);
+	} else if (on === 'DOMContentLoaded') {
+		element.attachEvent('onreadystatechange', function() {
+			if (element.readyState === 'complete') {
+				callback.call(this);
+			}
+		});
 	} else {
 		element.attachEvent('on' + on, getHandler(callback));
 	}
@@ -278,7 +285,7 @@ Nette.showFormErrors = function(form, errors) {
 		var elem = errors[i].element,
 			message = errors[i].message;
 
-		if (messages.indexOf(message) < 0) {
+		if (!Nette.inArray(messages, message)) {
 			messages.push(message);
 
 			if (!focusElem && elem.focus) {
@@ -653,7 +660,7 @@ Nette.initForm = function(form) {
  * @private
  */
 Nette.initOnLoad = function() {
-	Nette.addEvent(window, 'load', function() {
+	Nette.addEvent(document, 'DOMContentLoaded', function() {
 		for (var i = 0; i < document.forms.length; i++) {
 			var form = document.forms[i];
 			for (var j = 0; j < form.elements.length; j++) {
