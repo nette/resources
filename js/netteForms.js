@@ -455,13 +455,17 @@
 			} catch (e) {} // eslint-disable-line no-empty
 		},
 
-		pattern: function(elem, arg, val) {
+		pattern: function(elem, arg, val, value, caseInsensitive) {
 			if (typeof arg !== 'string') {
 				return null;
 			}
 
 			try {
-				var regExp = new RegExp('^(?:' + arg + ')$');
+				try {
+					var regExp = new RegExp('^(?:' + arg + ')$', caseInsensitive ? 'ui' : 'u');
+				} catch (e) {
+					regExp = new RegExp('^(?:' + arg + ')$', caseInsensitive ? 'i' : '');
+				}
 
 				if (window.FileList && val instanceof FileList) {
 					for (var i = 0; i < val.length; i++) {
@@ -475,6 +479,10 @@
 
 				return regExp.test(val);
 			} catch (e) {} // eslint-disable-line no-empty
+		},
+
+		patternCaseInsensitive: function(elem, arg, val) {
+			return Nette.validators.pattern(elem, arg, val, null, true);
 		},
 
 		integer: function(elem, arg, val) {
