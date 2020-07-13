@@ -31,6 +31,7 @@
 	var Nette = {};
 	var preventFiltering = {};
 	var formToggles = {};
+	var toggleListeners = new WeakMap();
 
 	Nette.formErrors = [];
 	Nette.version = '3.0';
@@ -592,7 +593,6 @@
 		emptyOptional = emptyOptional === undefined ? !Nette.validateRule(elem, ':filled', null, value) : emptyOptional;
 
 		var has = false,
-			handled = [],
 			handler = function () {
 				Nette.toggleForm(elem.form, elem);
 			},
@@ -634,9 +634,9 @@
 						els = curElem.tagName ? curElem.form.elements : curElem;
 
 					for (var i = 0; i < els.length; i++) {
-						if (els[i].name === name && handled.indexOf(els[i]) < 0) {
+						if (els[i].name === name && !toggleListeners.has(els[i])) {
 							els[i].addEventListener('change', handler);
-							handled.push(els[i]);
+							toggleListeners.set(els[i], null);
 						}
 					}
 				}
@@ -702,6 +702,7 @@
 				form.appendChild(elem);
 			}
 			form.elements[name].value = values[name].join(',');
+			form.elements[name].disabled = values[name].length === 0;
 		}
 	};
 
