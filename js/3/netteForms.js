@@ -31,10 +31,11 @@
 	var Nette = {};
 	var preventFiltering = {};
 	var formToggles = {};
-	var toggleListeners = new WeakMap();
+	var toggleListeners = new window.WeakMap();
 
 	Nette.formErrors = [];
 	Nette.version = '3.0';
+	Nette.invalidNumberMessage = 'Please enter a valid value.';
 
 
 	/**
@@ -137,6 +138,7 @@
 	 * Validates form element against given rules.
 	 */
 	Nette.validateControl = function(elem, rules, onlyCheck, value, emptyOptional) {
+		var top = !rules;
 		elem = elem.tagName ? elem : elem[0]; // RadioNodeList
 		rules = rules || JSON.parse(elem.getAttribute('data-nette-rules') || '[]');
 		value = value === undefined ? {value: Nette.getEffectiveValue(elem)} : value;
@@ -186,8 +188,8 @@
 		}
 
 		if (elem.type === 'number' && !elem.validity.valid) {
-			if (!onlyCheck) {
-				Nette.addError(elem, 'Please enter a valid value.');
+			if (top && !onlyCheck) {
+				Nette.addError(elem, Nette.invalidNumberMessage);
 			}
 			return false;
 		}
@@ -569,17 +571,17 @@
 	/**
 	 * Process all toggles in form.
 	 */
-	Nette.toggleForm = function(form, elem) {
+	Nette.toggleForm = function(form, event) {
 		var i;
 		formToggles = {};
 		for (i = 0; i < form.elements.length; i++) {
 			if (form.elements[i].tagName.toLowerCase() in {input: 1, select: 1, textarea: 1, button: 1}) {
-				Nette.toggleControl(form.elements[i], null, null, !elem);
+				Nette.toggleControl(form.elements[i], null, null, !event);
 			}
 		}
 
 		for (i in formToggles) {
-			Nette.toggle(i, formToggles[i], elem);
+			Nette.toggle(i, formToggles[i].state, formToggles[i].elem, event);
 		}
 	};
 
@@ -593,8 +595,8 @@
 		emptyOptional = emptyOptional === undefined ? !Nette.validateRule(elem, ':filled', null, value) : emptyOptional;
 
 		var has = false,
-			handler = function () {
-				Nette.toggleForm(elem.form, elem);
+			handler = function (e) {
+				Nette.toggleForm(elem.form, e);
 			},
 			curSuccess;
 
@@ -640,10 +642,9 @@
 						}
 					}
 				}
-				for (var id2 in rule.toggle || []) {
-					if (Object.prototype.hasOwnProperty.call(rule.toggle, id2)) {
-						formToggles[id2] = formToggles[id2] || (rule.toggle[id2] ? curSuccess : !curSuccess);
-					}
+				for (var toggleId in rule.toggle || []) {
+					formToggles[toggleId] = formToggles[toggleId] || {elem: elem};
+					formToggles[toggleId].state = formToggles[toggleId].state || (rule.toggle[toggleId] ? curSuccess : !curSuccess);
 				}
 			}
 		}
@@ -654,7 +655,7 @@
 	/**
 	 * Displays or hides HTML element.
 	 */
-	Nette.toggle = function(selector, visible, srcElement) { // eslint-disable-line no-unused-vars
+	Nette.toggle = function(selector, visible, srcElement, event) { // eslint-disable-line no-unused-vars
 		if (/^\w[\w.:-]*$/.test(selector)) { // id
 			selector = '#' + selector;
 		}
