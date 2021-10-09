@@ -15,9 +15,8 @@ You can also clone the project with Git by running:
 $ git clone git://github.com/nette/resources
 
 
-Documentation, Examples, Sandbox, Tools
----------------------------------------
+Documentation, Examples, Tools
+------------------------------
 
 Nette Framework: homepage http://nette.org and repository http://github.com/nette/nette
-Sandbox, pre-packaged and configured project: http://github.com/nette/sandbox
-Examples repository: http://github.com/nette/examples
+Examples repository: http://github.com/nette-examples
